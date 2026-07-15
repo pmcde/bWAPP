@@ -20,7 +20,7 @@ include("security.php");
 include("security_level_check.php");
 include("selections.php");
 include("functions_external.php");
-include("connect.php");
+include("connect_i.php");
 
 $message = "";
 
@@ -132,30 +132,36 @@ function sqli($data)
     {
 
         $login = $_POST["login"];
-        $login = sqli($login);
-
         $password = $_POST["password"];
-        $password = sqli($password);
 
-        $sql = "SELECT * FROM heroes WHERE login = '" . $login . "' AND password = '" . $password . "'";
+        $sql = "SELECT * FROM heroes WHERE login = ? AND password = ?";
 
-        // echo $sql;
+        $stmt = $link->prepare($sql);
 
-        $recordset = mysql_query($sql, $link);
-
-        if(!$recordset)
+        if(!$stmt)
         {
 
-            die("Error: " . mysql_error());
+            die("Error: " . $link->error);
+
+        }
+
+        $stmt->bind_param("ss", $login, $password);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if(!$result)
+        {
+
+            die("Error: " . $link->error);
 
         }
 
         else
         {
 
-            $row = mysql_fetch_array($recordset);
+            $row = $result->fetch_assoc();
 
-            if($row["login"])
+            if($row && $row["login"])
             {
 
                 // $message = "<font color=\"green\">Welcome " . ucwords($row["login"]) . "...</font>";
@@ -173,7 +179,8 @@ function sqli($data)
 
         }
 
-        mysql_close($link);
+        $stmt->close();
+        $link->close();
 
     }
 
