@@ -23,7 +23,7 @@ include("security.php");
 include("security_level_check.php");
 include("selections.php");
 include("functions_external.php");
-include("connect.php");
+include("connect_i.php");
 
 $message = "";
 
@@ -141,30 +141,39 @@ function sqli($data)
         $password = sqli($password);
         $password = hash("sha1", $password, false);
 
-        $sql = "SELECT * FROM users WHERE login = '" . $login . "'";
+        $sql = "SELECT login, password, secret FROM users WHERE login = ?";
 
-        // echo $sql;
-
-        $recordset = mysql_query($sql, $link);
-
-        if(!$recordset)
+        if($stmt = $link->prepare($sql))
         {
 
-            die("Error: " . mysql_error());
+            $stmt->bind_param("s", $login);
 
-        }
+            $stmt->execute();
 
-        else
-        {
+            $stmt->bind_result($db_login, $db_password, $db_secret);
 
-            $row = mysql_fetch_array($recordset);
+            $stmt->store_result();
 
-            if($row["login"] && $password == $row["password"])
+            if($stmt->num_rows > 0)
             {
 
-                // $message = "<font color=\"green\">Welcome " . ucwords($row["login"]) . "...</font>";
-                $message =  "<p>Welcome <b>" . ucwords($row["login"]) . "</b>, how are you today?</p><p>Your secret: <b>" . ucwords($row["secret"]) . "</b></p>";
-                // $message = $row["login"];
+                $stmt->fetch();
+
+                if($db_login && $password == $db_password)
+                {
+
+                    // $message = "<font color=\"green\">Welcome " . ucwords($db_login) . "...</font>";
+                    $message =  "<p>Welcome <b>" . ucwords($db_login) . "</b>, how are you today?</p><p>Your secret: <b>" . ucwords($db_secret) . "</b></p>";
+                    // $message = $db_login;
+
+                }
+
+                else
+                {
+
+                    $message = "<font color=\"red\">Invalid credentials!</font>";
+
+                }
 
             }
 
@@ -175,9 +184,18 @@ function sqli($data)
 
             }
 
+            $stmt->close();
+
         }
 
-        mysql_close($link);
+        else
+        {
+
+            die("Error: " . $link->error);
+
+        }
+
+        $link->close();
 
     }
 
