@@ -79,7 +79,44 @@ include("selections.php");
 
     <?php
 
-    @eval($_REQUEST["eval"]);
+    if(isset($_REQUEST["eval"]))
+    {
+        $input = $_REQUEST["eval"];
+        
+        $allowed_operations = array(
+            "phpinfo" => "phpinfo",
+            "date" => "date",
+            "time" => "time"
+        );
+        
+        $input_lower = strtolower(trim($input));
+        
+        if(array_key_exists($input_lower, $allowed_operations))
+        {
+            switch($input_lower)
+            {
+                case "phpinfo":
+                    phpinfo();
+                    break;
+                    
+                case "date":
+                    echo "<p>Current date: " . date("Y-m-d H:i:s") . "</p>";
+                    break;
+                    
+                case "time":
+                    echo "<p>Current timestamp: " . time() . "</p>";
+                    break;
+                    
+                default:
+                    echo "<p><font color='red'>Operation not allowed</font></p>";
+                    break;
+            }
+        }
+        else
+        {
+            echo "<p><font color='red'>Invalid operation. Allowed operations: phpinfo, date, time</font></p>";
+        }
+    }
 
     ?>
 </div>
