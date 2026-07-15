@@ -135,18 +135,20 @@ function sqli($data)
 
         $db = new PDO("sqlite:".$db_sqlite);
 
-        $sql = "SELECT * FROM movies WHERE title = '" . sqli($title) . "' COLLATE NOCASE";
+        $sql = "SELECT * FROM movies WHERE title = :title COLLATE NOCASE";
 
-        $recordset = $db->query($sql);
+        $stmt = $db->prepare($sql);
 
-        if(!$recordset)
+        if(!$stmt)
         {
 
             die("<font color=\"red\">Incorrect syntax detected!</font>");
 
         }
 
-        if($recordset->fetchColumn() > 0)
+        $stmt->execute([':title' => $title]);
+
+        if($stmt->fetchColumn() > 0)
         {
 
             echo "The movie exists in our database!";
